@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>炒股模拟器</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 30px;
+            background-color: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ffffff;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 1px solid #333333;
+            border-radius: 10px;
+            background-color: #252525;
+        }
+        
+        .section h2 {
+            margin-bottom: 20px;
+            color: #ffffff;
+            font-size: 20px;
+            font-weight: 500;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #b0b0b0;
+        }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #444444;
+            border-radius: 6px;
+            background-color: #333333;
+            color: #e0e0e0;
+            font-size: 16px;
+        }
+        
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        button {
+            padding: 12px 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-1px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        /* 股票列表样式 */
+        .stock-list {
+            margin-top: 20px;
+        }
+        
+        .stock-item {
+            padding: 20px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background-color: #2a2a2a;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .stock-item:hover {
+            background-color: #333333;
+            border-color: #444444;
+        }
+        
+        .stock-item.selected {
+            background-color: #3a3a3a;
+            border-color: #3498db;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        
+        .stock-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .stock-header h3 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .stock-price {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 0;
+        }
+        
+        .price-change {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 14px;
+            display: inline-block;
+        }
+        
+        .stock-item {
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .price-change.positive {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: #4caf50;
+        }
+        
+        .price-change.negative {
+            background-color: rgba(239, 65, 54, 0.2);
+            color: #ef4136;
+        }
+        
+        /* 股票操作区域 */
+        .stock-actions {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #333333;
+            border-radius: 8px;
+            background-color: #252525;
+        }
+        
+        .action-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .action-col {
+            flex: 1;
+        }
+        
+        .action-col button {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .quick-actions button {
+            margin-top: 0;
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+        
+        .buy-btn {
+            background-color: #4caf50;
+        }
+        
+        .buy-btn:hover {
+            background-color: #45a049;
+        }
+        
+        .sell-btn {
+            background-color: #ef4136;
+        }
+        
+        .sell-btn:hover {
+            background-color: #d32f2f;
+        }
+        
+        .chart-btn {
+            background-color: #9c27b0;
+        }
+        
+        .chart-btn:hover {
+            background-color: #7b1fa2;
+        }
+        
+        .portfolio {
+            margin-top: 20px;
+        }
+        
+        .portfolio-item {
+            padding: 15px;
+            border-bottom: 1px solid #333333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .portfolio-item:last-child {
+            border-bottom: none;
+        }
+        
+        .portfolio-item .stock-info {
+            flex: 1;
+        }
+        
+        .portfolio-item .stock-price {
+            font-size: 18px;
+            margin-right: 20px;
+        }
+        
+        .portfolio-item .stock-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .portfolio-item .stock-actions input {
+            width: 80px;
+        }
+        
+        .portfolio-item .stock-actions button {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .balance-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #333333;
+            border-radius: 8px;
+        }
+        
+        .balance-info {
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .balance-info div {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .balance-info .total-value {
+            color: #3498db;
+        }
+        
+        .balance-info .cash {
+            color: #4caf50;
+        }
+        
+        .balance-info .time-info {
+            color: #f39c12;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        
+        .speed-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .speed-controls button {
+            padding: 5px 10px;
+            font-size: 12px;
+            background-color: #34495e;
+        }
+        
+        .speed-controls button:hover {
+            background-color: #2c3e50;
+        }
+        
+        /* K线图样式 */
+        .chart-container {
+            width: 100%;
+            height: 500px;
+            margin-top: 20px;
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+        }
+        
+        .modal-content {
+            background-color: #1e1e1e;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 1200px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid #333333;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: #ffffff;
+            font-size: 20px;
+        }
+        
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #999999;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #ffffff;
+        }
+        
+        /* 欢迎页面样式 */
+        .welcome-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            margin-top: 30px;
+        }
+        
+        .pixel-image {
+            margin-bottom: 30px;
+        }
+        
+        .welcome-text {
+            max-width: 600px;
+        }
+        
+        .welcome-text h2 {
+            margin-bottom: 20px;
+            color: #3498db;
+            font-size: 24px;
+        }
+        
+        .welcome-text p {
+            margin-bottom: 20px;
+            font-size: 18px;
+            color: #b0b0b0;
+        }
+        
+        .welcome-text ul {
+            list-style: none;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        
+        .welcome-text li {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .welcome-text li:before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .start-btn {
+            background-color: #3498db;
+            font-size: 20px;
+            padding: 15px 40px;
+            margin-top: 20px;
+        }
+        
+        .start-btn:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+        }
+        
+        /* 主内容区域布局 */
+        .main-content {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .left-panel {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .right-panel {
+            flex: 2;
+            min-width: 500px;
+        }
+        
+        /* 响应式布局 */
+        @media (max-width: 900px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .left-panel,
+            .right-panel {
+                width: 100%;
+                min-width: unset;
+            }
+            
+            .balance-info {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .time-info {
+                align-items: flex-start;
+                width: 100%;
+            }
+            
+            .speed-controls {
+                flex-wrap: wrap;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+                margin: 10px;
+            }
+            
+            .section {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .action-row {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stock-item {
+                padding: 12px;
+            }
+            
+            .stock-header h3 {
+                font-size: 14px;
+            }
+            
+            .stock-price {
+                font-size: 18px;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 欢迎页面 -->
+    <div class="container" id="welcome-page">
+        <h1>炒股模拟器</h1>
+        <div class="welcome-content">
+            <div class="pixel-image">
+                <img src="https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?prompt=pixel%20art%20financial%20tycoon%20with%20money%20and%20stocks%2C%208-bit%20style%2C%20colorful%2C%20cartoon" alt="金融大亨" style="width: 300px; height: 300px; object-fit: contain;">
+            </div>
+            <div class="welcome-text">
+                <h2>缔造你的金融帝国！</h2>
+                <p>在这个模拟器中，你可以：</p>
+                <ul>
+                    <li>自由输入初始本金</li>
+                    <li>交易多只知名上市公司股票</li>
+                    <li>查看实时K线图和交易点</li>
+                    <li>使用半仓、全仓等快速交易功能</li>
+                </ul>
+                <button onclick="showInitialSetup()" class="start-btn">开始游戏</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 游戏页面 -->
+    <div class="container" id="game-container" style="display: none;">
+        <h1>炒股模拟器</h1>
+        
+        <!-- 初始设置 -->
+        <div class="section" id="initial-setup">
+            <h2>初始设置</h2>
+            <div class="form-group">
+                <label for="initial-balance">初始本金 (元):</label>
+                <input type="number" id="initial-balance" min="1000" value="10000" step="1000">
+            </div>
+            <button onclick="startSimulator()">开始模拟</button>
+        </div>
+        
+        <!-- 模拟界面 -->
+        <div class="section" id="simulator" style="display: none;">
+            <div class="balance-info">
+                <div class="cash">可用资金: <span id="cash">0</span> 元</div>
+                <div class="total-value">总资产: <span id="total-value">0</span> 元</div>
+                <div class="time-info">
+                    <span id="current-time">2024-01-01</span>
+                    <div class="speed-controls">
+                        <button onclick="setSpeed(1)">正常</button>
+                        <button onclick="setSpeed(2)">1倍速</button>
+                        <button onclick="setSpeed(4)">2倍速</button>
+                        <button onclick="setSpeed(6)">3倍速</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 主内容区域 -->
+            <div class="main-content">
+                <!-- 左侧股票列表 -->
+                <div class="left-panel">
+                    <h2>可购买股票</h2>
+                    <div class="stock-list" id="stock-list"></div>
+                </div>
+                
+                <!-- 右侧K线图和操作区域 -->
+                <div class="right-panel" id="right-panel" style="display: none;">
+                    <h3 id="selected-stock-name">请选择一只股票</h3>
+                    <!-- K线图 -->
+                    <div class="chart-container" id="stock-chart"></div>
+                    <!-- 股票操作区域 -->
+                    <div class="stock-actions">
+                        <div class="action-row">
+                            <div class="action-col">
+                                <label for="buy-shares">购买数量:</label>
+                                <input type="number" id="buy-shares" min="1" value="1" placeholder="购买数量">
+                                <div class="quick-actions">
+                                    <button class="buy-btn" onclick="buySelectedStock()">买入</button>
+                                    <button class="buy-btn" onclick="buyFraction(0.33)">1/3仓</button>
+                                    <button class="buy-btn" onclick="buyFraction(0.5)">半仓</button>
+                                    <button class="buy-btn" onclick="buyFraction(1)">全仓</button>
+                                </div>
+                            </div>
+                            <div class="action-col">
+                                <label for="sell-shares">卖出数量:</label>
+                                <input type="number" id="sell-shares" min="1" value="1" placeholder="卖出数量">
+                                <div class="quick-actions">
+                                    <button class="sell-btn" onclick="sellSelectedStock()">卖出</button>
+                                    <button class="sell-btn" onclick="sellFraction(0.33)">1/3仓</button>
+                                    <button class="sell-btn" onclick="sellFraction(0.5)">半仓</button>
+                                    <button class="sell-btn" onclick="sellFraction(1)">全仓</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 持仓列表 -->
+            <h2>持仓</h2>
+            <div class="portfolio" id="portfolio"></div>
+        </div>
+    </div>
+    
+    <script>
+        // 全局变量
+        let cash = 0;
+        let portfolio = [];
+        let stocks = [
+            { id: 1, name: '阿里巴巴', code: 'BABA', price: 80.5, change: 0.2, history: [] },
+            { id: 2, name: '腾讯控股', code: '0700', price: 320.8, change: -0.5, history: [] },
+            { id: 3, name: '苹果公司', code: 'AAPL', price: 180.2, change: 1.2, history: [] },
+            { id: 4, name: '特斯拉', code: 'TSLA', price: 250.5, change: -0.8, history: [] },
+            { id: 5, name: '微软', code: 'MSFT', price: 420.3, change: 0.6, history: [] },
+            { id: 6, name: '亚马逊', code: 'AMZN', price: 145.7, change: 1.5, history: [] },
+            { id: 7, name: '谷歌', code: 'GOOGL', price: 135.6, change: 0.9, history: [] },
+            { id: 8, name: '脸书', code: 'META', price: 320.4, change: -0.3, history: [] },
+            { id: 9, name: '京东', code: 'JD', price: 45.2, change: 0.7, history: [] },
+            { id: 10, name: '网易', code: 'NTES', price: 95.8, change: -0.4, history: [] },
+            { id: 11, name: '百度', code: 'BIDU', price: 120.3, change: 1.1, history: [] },
+            { id: 12, name: '拼多多', code: 'PDD', price: 85.6, change: 0.5, history: [] }
+        ];
+        // 交易历史记录
+        let tradeHistory = [];
+        // 当前选中的股票
+        let selectedStock = null;
+        // 时间相关变量
+        let currentDate = new Date('2024-01-01');
+        let speedMultiplier = 1;
+        let updateInterval = null;
+        
+        // 显示初始设置页面
+        function showInitialSetup() {
+            document.getElementById('welcome-page').style.display = 'none';
+            document.getElementById('game-container').style.display = 'block';
+        }
+        
+        // 开始模拟器
+        function startSimulator() {
+            const initialBalance = parseFloat(document.getElementById('initial-balance').value);
+            cash = initialBalance;
+            
+            // 为每只股票生成初始历史数据
+            stocks.forEach(stock => {
+                stock.history = generateStockHistory(stock.price);
+            });
+            
+            document.getElementById('initial-setup').style.display = 'none';
+            document.getElementById('simulator').style.display = 'block';
+            
+            updateBalance();
+            renderStocks();
+            renderPortfolio();
+            updateTimeDisplay();
+            
+            // 开始时间和价格更新
+            startUpdates();
+        }
+        
+        // 开始更新
+        function startUpdates() {
+            // 清除之前的定时器
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+            
+            // 根据速度设置更新间隔
+            const interval = 3000 / speedMultiplier;
+            updateInterval = setInterval(() => {
+                updateStockPrices();
+                updateDate();
+                // 随机生成事件
+                generateRandomEvent();
+            }, interval);
+        }
+        
+        // 设置速度
+        function setSpeed(speed) {
+            speedMultiplier = speed;
+            startUpdates();
+        }
+        
+        // 更新日期
+        function updateDate() {
+            currentDate.setDate(currentDate.getDate() + 1);
+            updateTimeDisplay();
+        }
+        
+        // 更新时间显示
+        function updateTimeDisplay() {
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = currentDate.toISOString().split('T')[0];
+            }
+        }
+        
+        // 生成股票历史数据
+        function generateStockHistory(initialPrice) {
+            const history = [];
+            const now = new Date();
+            
+            // 生成过去30天的数据
+            for (let i = 29; i >= 0; i--) {
+                const date = new Date(now);
+                date.setDate(date.getDate() - i);
+                
+                // 随机生成价格变化
+                const changePercent = (Math.random() * 4 - 2) / 100;
+                if (i === 29) {
+                    // 第一天使用初始价格
+                    history.push({
+                        date: date.toISOString().split('T')[0],
+                        open: initialPrice,
+                        close: initialPrice * (1 + changePercent),
+                        high: initialPrice * (1 + Math.random() * 2 / 100),
+                        low: initialPrice * (1 - Math.random() * 2 / 100)
+                    });
+                } else {
+                    // 后续天数基于前一天的收盘价
+                    const prevClose = history[history.length - 1].close;
+                    const close = prevClose * (1 + changePercent);
+                    history.push({
+                        date: date.toISOString().split('T')[0],
+                        open: prevClose,
+                        close: close,
+                        high: Math.max(prevClose, close) * (1 + Math.random() * 1 / 100),
+                        low: Math.min(prevClose, close) * (1 - Math.random() * 1 / 100)
+                    });
+                }
+            }
+            
+            return history;
+        }
+        
+        // 更新余额信息
+        function updateBalance() {
+            document.getElementById('cash').textContent = cash.toFixed(2);
+            
+            let totalValue = cash;
+            portfolio.forEach(item => {
+                const stock = stocks.find(s => s.id === item.stockId);
+                if (stock) {
+                    totalValue += stock.price * item.shares;
+                }
+            });
+            
+            document.getElementById('total-value').textContent = totalValue.toFixed(2);
+        }
+        
+        // 渲染股票列表
+        function renderStocks() {
+            const stockList = document.getElementById('stock-list');
+            stockList.innerHTML = '';
+            
+            stocks.forEach(stock => {
+                const stockItem = document.createElement('div');
+                stockItem.className = `stock-item ${selectedStock && selectedStock.id === stock.id ? 'selected' : ''}`;
+                stockItem.onclick = () => selectStock(stock);
+                
+                const changeClass = stock.change >= 0 ? 'positive' : 'negative';
+                const changeSign = stock.change >= 0 ? '+' : '';
+                
+                stockItem.innerHTML = `
+                    <div class="stock-header">
+                        <h3>${stock.name} (${stock.code})</h3>
+                        <div class="price-change ${changeClass}">${changeSign}${stock.change.toFixed(2)}%</div>
+                    </div>
+                    <div class="stock-price">¥${stock.price.toFixed(2)}</div>
+                `;
+                
+                stockList.appendChild(stockItem);
+            });
+        }
+        
+        // 选择股票
+        function selectStock(stock) {
+            selectedStock = stock;
+            const rightPanel = document.getElementById('right-panel');
+            const selectedStockName = document.getElementById('selected-stock-name');
+            
+            selectedStockName.textContent = `${stock.name} (${stock.code}) - 当前价格: ¥${stock.price.toFixed(2)}`;
+            rightPanel.style.display = 'block';
+            
+            // 绘制K线图
+            drawKLineChart(stock);
+            
+            // 重新渲染股票列表以更新选中状态
+            renderStocks();
+        }
+        
+        // 渲染持仓列表
+        function renderPortfolio() {
+            // 保存卖出输入框的值
+            const sellInputValues = {};
+            portfolio.forEach(item => {
+                const input = document.getElementById(`sell-${item.stockId}`);
+                if (input) {
+                    sellInputValues[item.stockId] = input.value;
+                }
+            });
+            
+            const portfolioElement = document.getElementById('portfolio');
+            portfolioElement.innerHTML = '';
+            
+            if (portfolio.length === 0) {
+                portfolioElement.innerHTML = '<p>暂无持仓</p>';
+                return;
+            }
+            
+            portfolio.forEach(item => {
+                const stock = stocks.find(s => s.id === item.stockId);
+                if (stock) {
+                    const portfolioItem = document.createElement('div');
+                    portfolioItem.className = 'portfolio-item';
+                    
+                    const currentValue = stock.price * item.shares;
+                    const profit = currentValue - (item.averagePrice * item.shares);
+                    const profitPercent = (profit / (item.averagePrice * item.shares)) * 100;
+                    const profitClass = profit >= 0 ? 'positive' : 'negative';
+                    const profitSign = profit >= 0 ? '+' : '';
+                    
+                    // 使用保存的值或默认值1
+                    const value = sellInputValues[item.stockId] || '1';
+                    
+                    portfolioItem.innerHTML = `
+                        <div class="stock-info">
+                            <h4>${stock.name} (${stock.code})</h4>
+                            <p>持有: ${item.shares} 股</p>
+                            <p>成本价: ¥${item.averagePrice.toFixed(2)}</p>
+                            <p class="price-change ${profitClass}">盈亏: ${profitSign}¥${profit.toFixed(2)} (${profitSign}${profitPercent.toFixed(2)}%)</p>
+                        </div>
+                        <div class="stock-price">¥${stock.price.toFixed(2)}</div>
+                        <div class="stock-actions">
+                            <input type="number" id="sell-${stock.id}" min="1" value="${value}" placeholder="卖出数量">
+                            <button onclick="sellStock(${stock.id})">卖出</button>
+                        </div>
+                    `;
+                    
+                    portfolioElement.appendChild(portfolioItem);
+                }
+            });
+        }
+        
+        // 买入股票
+        function buyStock(stockId) {
+            const stock = stocks.find(s => s.id === stockId);
+            if (!stock) return;
+            
+            const sharesInput = document.getElementById(`buy-${stockId}`);
+            const shares = parseInt(sharesInput.value);
+            
+            if (isNaN(shares) || shares <= 0) {
+                alert('请输入有效的购买数量');
+                return;
+            }
+            
+            const totalCost = stock.price * shares;
+            if (totalCost > cash) {
+                alert('资金不足');
+                return;
+            }
+            
+            // 检查是否已经持有该股票
+            const existingItem = portfolio.find(item => item.stockId === stockId);
+            if (existingItem) {
+                // 更新持仓
+                const totalShares = existingItem.shares + shares;
+                const totalCost = existingItem.averagePrice * existingItem.shares + stock.price * shares;
+                existingItem.averagePrice = totalCost / totalShares;
+                existingItem.shares = totalShares;
+            } else {
+                // 新增持仓
+                portfolio.push({
+                    stockId: stockId,
+                    shares: shares,
+                    averagePrice: stock.price
+                });
+            }
+            
+            // 记录交易历史
+            tradeHistory.push({
+                stockId: stockId,
+                type: 'buy',
+                price: stock.price,
+                shares: shares,
+                total: totalCost,
+                date: new Date().toISOString()
+            });
+            
+            // 扣除资金
+            cash -= totalCost;
+            
+            // 更新界面
+            updateBalance();
+            renderPortfolio();
+        }
+        
+        // 卖出股票
+        function sellStock(stockId) {
+            const stock = stocks.find(s => s.id === stockId);
+            if (!stock) return;
+            
+            const sharesInput = document.getElementById(`sell-${stockId}`);
+            const shares = parseInt(sharesInput.value);
+            
+            if (isNaN(shares) || shares <= 0) {
+                alert('请输入有效的卖出数量');
+                return;
+            }
+            
+            // 找到持仓
+            const existingItem = portfolio.find(item => item.stockId === stockId);
+            if (!existingItem) {
+                alert('您没有持有该股票');
+                return;
+            }
+            
+            if (shares > existingItem.shares) {
+                alert('卖出数量不能超过持有数量');
+                return;
+            }
+            
+            // 计算卖出金额
+            const totalAmount = stock.price * shares;
+            
+            // 更新持仓
+            existingItem.shares -= shares;
+            if (existingItem.shares === 0) {
+                // 移除持仓
+                portfolio = portfolio.filter(item => item.stockId !== stockId);
+            }
+            
+            // 记录交易历史
+            tradeHistory.push({
+                stockId: stockId,
+                type: 'sell',
+                price: stock.price,
+                shares: shares,
+                total: totalAmount,
+                date: new Date().toISOString()
+            });
+            
+            // 增加资金
+            cash += totalAmount;
+            
+            // 更新界面
+            updateBalance();
+            renderPortfolio();
+        }
+        
+        // 买入选中的股票
+        function buySelectedStock() {
+            if (!selectedStock) {
+                alert('请先选择一只股票');
+                return;
+            }
+            
+            const sharesInput = document.getElementById('buy-shares');
+            const shares = parseInt(sharesInput.value);
+            
+            if (isNaN(shares) || shares <= 0) {
+                alert('请输入有效的购买数量');
+                return;
+            }
+            
+            const totalCost = selectedStock.price * shares;
+            if (totalCost > cash) {
+                alert('资金不足');
+                return;
+            }
+            
+            // 检查是否已经持有该股票
+            const existingItem = portfolio.find(item => item.stockId === selectedStock.id);
+            if (existingItem) {
+                // 更新持仓
+                const totalShares = existingItem.shares + shares;
+                const totalCost = existingItem.averagePrice * existingItem.shares + selectedStock.price * shares;
+                existingItem.averagePrice = totalCost / totalShares;
+                existingItem.shares = totalShares;
+            } else {
+                // 新增持仓
+                portfolio.push({
+                    stockId: selectedStock.id,
+                    shares: shares,
+                    averagePrice: selectedStock.price
+                });
+            }
+            
+            // 记录交易历史
+            tradeHistory.push({
+                stockId: selectedStock.id,
+                type: 'buy',
+                price: selectedStock.price,
+                shares: shares,
+                total: totalCost,
+                date: new Date().toISOString()
+            });
+            
+            // 扣除资金
+            cash -= totalCost;
+            
+            // 更新界面
+            updateBalance();
+            renderPortfolio();
+        }
+        
+        // 卖出选中的股票
+        function sellSelectedStock() {
+            if (!selectedStock) {
+                alert('请先选择一只股票');
+                return;
+            }
+            
+            const sharesInput = document.getElementById('sell-shares');
+            const shares = parseInt(sharesInput.value);
+            
+            if (isNaN(shares) || shares <= 0) {
+                alert('请输入有效的卖出数量');
+                return;
+            }
+            
+            // 找到持仓
+            const existingItem = portfolio.find(item => item.stockId === selectedStock.id);
+            if (!existingItem) {
+                alert('您没有持有该股票');
+                return;
+            }
+            
+            if (shares > existingItem.shares) {
+                alert('卖出数量不能超过持有数量');
+                return;
+            }
+            
+            // 计算卖出金额
+            const totalAmount = selectedStock.price * shares;
+            
+            // 更新持仓
+            existingItem.shares -= shares;
+            if (existingItem.shares === 0) {
+                // 移除持仓
+                portfolio = portfolio.filter(item => item.stockId !== selectedStock.id);
+            }
+            
+            // 记录交易历史
+            tradeHistory.push({
+                stockId: selectedStock.id,
+                type: 'sell',
+                price: selectedStock.price,
+                shares: shares,
+                total: totalAmount,
+                date: new Date().toISOString()
+            });
+            
+            // 增加资金
+            cash += totalAmount;
+            
+            // 更新界面
+            updateBalance();
+            renderPortfolio();
+        }
+        
+        // 按比例买入股票
+        function buyFraction(fraction) {
+            if (!selectedStock) {
+                alert('请先选择一只股票');
+                return;
+            }
+            
+            // 计算可购买的最大数量
+            const maxAmount = cash * fraction;
+            const shares = Math.floor(maxAmount / selectedStock.price);
+            
+            if (shares <= 0) {
+                alert('资金不足');
+                return;
+            }
+            
+            // 设置输入框值
+            document.getElementById('buy-shares').value = shares;
+            // 执行买入
+            buySelectedStock();
+        }
+        
+        // 按比例卖出股票
+        function sellFraction(fraction) {
+            if (!selectedStock) {
+                alert('请先选择一只股票');
+                return;
+            }
+            
+            // 找到持仓
+            const existingItem = portfolio.find(item => item.stockId === selectedStock.id);
+            if (!existingItem) {
+                alert('您没有持有该股票');
+                return;
+            }
+            
+            // 计算卖出数量
+            const shares = Math.floor(existingItem.shares * fraction);
+            
+            if (shares <= 0) {
+                alert('卖出数量必须大于0');
+                return;
+            }
+            
+            // 设置输入框值
+            document.getElementById('sell-shares').value = shares;
+            // 执行卖出
+            sellSelectedStock();
+        }
+        
+        // 生成随机事件
+        function generateRandomEvent() {
+            // 10%的概率生成事件，保持原有频次
+            if (Math.random() < 0.1) {
+                const events = [
+                    // 利好事件
+                    { type: 'positive', text: '央行降息，市场流动性增加', impact: 0.03, scope: 'market' },
+                    { type: 'positive', text: '公司发布财报，业绩超预期', impact: 0.05, scope: 'company' },
+                    { type: 'positive', text: '行业政策利好，前景看好', impact: 0.04, scope: 'industry' },
+                    { type: 'positive', text: '公司获得重大订单', impact: 0.06, scope: 'company' },
+                    { type: 'positive', text: '技术突破，新产品发布', impact: 0.04, scope: 'company' },
+                    { type: 'positive', text: '大型机构增持股票', impact: 0.05, scope: 'company' },
+                    { type: 'positive', text: '公司宣布股票回购计划', impact: 0.04, scope: 'company' },
+                    { type: 'positive', text: '行业龙头并购重组', impact: 0.06, scope: 'industry' },
+                    { type: 'positive', text: '经济数据超预期，市场信心提振', impact: 0.03, scope: 'market' },
+                    { type: 'positive', text: '国际市场上涨，带动国内股市', impact: 0.02, scope: 'market' },
+                    // 利空事件
+                    { type: 'negative', text: '央行加息，市场流动性收紧', impact: -0.03, scope: 'market' },
+                    { type: 'negative', text: '公司发布财报，业绩不及预期', impact: -0.05, scope: 'company' },
+                    { type: 'negative', text: '行业政策利空，监管加强', impact: -0.04, scope: 'industry' },
+                    { type: 'negative', text: '公司遭遇重大诉讼', impact: -0.06, scope: 'company' },
+                    { type: 'negative', text: '技术故障，产品召回', impact: -0.04, scope: 'company' },
+                    { type: 'negative', text: '大型机构减持股票', impact: -0.05, scope: 'company' },
+                    { type: 'negative', text: '公司高管辞职', impact: -0.03, scope: 'company' },
+                    { type: 'negative', text: '行业竞争加剧，利润率下降', impact: -0.04, scope: 'industry' },
+                    { type: 'negative', text: '经济数据不及预期，市场担忧', impact: -0.03, scope: 'market' },
+                    { type: 'negative', text: '国际市场下跌，拖累国内股市', impact: -0.02, scope: 'market' },
+                    // 特殊事件
+                    { type: 'special', text: '市场剧烈波动，所有股票价格随机变化', impact: 0, scope: 'market' },
+                    { type: 'special', text: '神秘资金入场，部分股票大幅上涨', impact: 0, scope: 'market' },
+                    { type: 'special', text: '市场恐慌抛售，部分股票大幅下跌', impact: 0, scope: 'market' }
+                ];
+                
+                // 随机选择一个事件
+                const event = events[Math.floor(Math.random() * events.length)];
+                
+                let affectedStocks = [];
+                
+                // 根据事件范围选择受影响的股票
+                if (event.scope === 'market') {
+                    // 市场事件影响所有股票
+                    affectedStocks = [...stocks];
+                } else if (event.scope === 'industry') {
+                    // 行业事件影响部分股票（3-6只）
+                    const stockCount = Math.floor(Math.random() * 4) + 3;
+                    const shuffledStocks = [...stocks].sort(() => 0.5 - Math.random());
+                    for (let i = 0; i < stockCount; i++) {
+                        affectedStocks.push(shuffledStocks[i]);
+                    }
+                } else if (event.scope === 'company') {
+                    // 公司事件影响1-2只股票
+                    const stockCount = Math.floor(Math.random() * 2) + 1;
+                    const shuffledStocks = [...stocks].sort(() => 0.5 - Math.random());
+                    for (let i = 0; i < stockCount; i++) {
+                        affectedStocks.push(shuffledStocks[i]);
+                    }
+                }
+                
+                // 应用事件影响
+                affectedStocks.forEach(stock => {
+                    let oldPrice = stock.price;
+                    let newPrice;
+                    
+                    if (event.type === 'special') {
+                        // 特殊事件的随机影响
+                        if (event.text.includes('剧烈波动')) {
+                            // 随机波动 ±5%
+                            const randomImpact = (Math.random() * 10 - 5) / 100;
+                            newPrice = stock.price * (1 + randomImpact);
+                        } else if (event.text.includes('神秘资金')) {
+                            // 随机上涨 3-8%
+                            const randomImpact = (Math.random() * 5 + 3) / 100;
+                            newPrice = stock.price * (1 + randomImpact);
+                        } else if (event.text.includes('恐慌抛售')) {
+                            // 随机下跌 3-8%
+                            const randomImpact = -(Math.random() * 5 + 3) / 100;
+                            newPrice = stock.price * (1 + randomImpact);
+                        }
+                    } else {
+                        // 普通事件的固定影响
+                        newPrice = stock.price * (1 + event.impact);
+                    }
+                    
+                    stock.price = Math.max(1, newPrice);
+                    stock.change = ((stock.price - oldPrice) / oldPrice) * 100;
+                    
+                    // 更新历史数据
+                    stock.history.push({
+                        date: currentDate.toISOString().split('T')[0],
+                        open: oldPrice,
+                        close: stock.price,
+                        high: Math.max(oldPrice, stock.price) * (1 + Math.random() * 0.01),
+                        low: Math.min(oldPrice, stock.price) * (1 - Math.random() * 0.01)
+                    });
+                    
+                    // 只保留最近30天的数据
+                    if (stock.history.length > 30) {
+                        stock.history.shift();
+                    }
+                });
+                
+                // 显示事件通知
+                showEventNotification(event, affectedStocks);
+            }
+        }
+        
+        // 显示事件通知
+        function showEventNotification(event, affectedStocks) {
+            let eventType;
+            let impactText;
+            
+            if (event.type === 'positive') {
+                eventType = '利好';
+                impactText = `影响幅度：+${(event.impact * 100).toFixed(2)}%`;
+            } else if (event.type === 'negative') {
+                eventType = '利空';
+                impactText = `影响幅度：${(event.impact * 100).toFixed(2)}%`;
+            } else if (event.type === 'special') {
+                eventType = '特殊';
+                impactText = '影响幅度：随机';
+            }
+            
+            const stockNames = affectedStocks.length > 5 
+                ? `${affectedStocks.slice(0, 5).map(stock => stock.name).join('、')} 等${affectedStocks.length}只股票`
+                : affectedStocks.map(stock => stock.name).join('、');
+            
+            alert(`${eventType}事件：${event.text}\n受影响股票：${stockNames}\n${impactText}`);
+        }
+        
+        // 更新股票价格
+        function updateStockPrices() {
+            stocks.forEach(stock => {
+                // 随机生成价格变化 (-2% 到 +2%)
+                const changePercent = (Math.random() * 4 - 2) / 100;
+                const oldPrice = stock.price;
+                const newPrice = Math.max(1, stock.price * (1 + changePercent));
+                stock.price = newPrice;
+                stock.change = ((newPrice - oldPrice) / oldPrice) * 100;
+                
+                // 更新历史数据
+                stock.history.push({
+                    date: currentDate.toISOString().split('T')[0],
+                    open: oldPrice,
+                    close: newPrice,
+                    high: Math.max(oldPrice, newPrice) * (1 + Math.random() * 1 / 100),
+                    low: Math.min(oldPrice, newPrice) * (1 - Math.random() * 1 / 100)
+                });
+                
+                // 只保留最近30天的数据
+                if (stock.history.length > 30) {
+                    stock.history.shift();
+                }
+            });
+            
+            // 更新界面
+            renderStocks();
+            renderPortfolio();
+            updateBalance();
+            
+            // 如果有选中的股票，更新K线图
+            if (selectedStock) {
+                const stock = stocks.find(s => s.id === selectedStock.id);
+                if (stock) {
+                    drawKLineChart(stock);
+                }
+            }
+        }
+        
+        // 绘制K线图
+        function drawKLineChart(stock) {
+            const chartDom = document.getElementById('stock-chart');
+            const myChart = echarts.init(chartDom);
+            
+            // 准备K线数据
+            const data = stock.history.map(item => [
+                item.date,
+                item.open.toFixed(2),
+                item.close.toFixed(2),
+                item.low.toFixed(2),
+                item.high.toFixed(2)
+            ]);
+            
+            // 筛选当前股票的交易记录
+            const stockTrades = tradeHistory.filter(trade => trade.stockId === stock.id);
+            
+            // 准备买入卖出标记点
+            const buyMarks = [];
+            const sellMarks = [];
+            
+            stockTrades.forEach(trade => {
+                const tradeDate = new Date(trade.date).toISOString().split('T')[0];
+                const dataIndex = data.findIndex(item => item[0] === tradeDate);
+                
+                if (dataIndex !== -1) {
+                    if (trade.type === 'buy') {
+                        buyMarks.push({
+                            name: '买入',
+                            value: [tradeDate, trade.price],
+                            itemStyle: {
+                                color: '#4caf50'
+                            },
+                            symbolSize: 8
+                        });
+                    } else if (trade.type === 'sell') {
+                        sellMarks.push({
+                            name: '卖出',
+                            value: [tradeDate, trade.price],
+                            itemStyle: {
+                                color: '#ef4136'
+                            },
+                            symbolSize: 8
+                        });
+                    }
+                }
+            });
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                legend: {
+                    data: ['K线', '买入', '卖出']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: data.map(item => item[0]),
+                    boundaryGap: false
+                },
+                yAxis: {
+                    type: 'value',
+                    scale: true
+                },
+                series: [
+                    {
+                        name: 'K线',
+                        type: 'candlestick',
+                        data: data.map(item => [
+                            parseFloat(item[1]),
+                            parseFloat(item[4]),
+                            parseFloat(item[3]),
+                            parseFloat(item[2])
+                        ]),
+                        itemStyle: {
+                            color: '#ef4136',
+                            color0: '#4caf50',
+                            borderColor: '#ef4136',
+                            borderColor0: '#4caf50'
+                        }
+                    },
+                    {
+                        name: '买入',
+                        type: 'scatter',
+                        data: buyMarks,
+                        symbol: 'circle',
+                        symbolSize: 10,
+                        itemStyle: {
+                            color: '#4caf50'
+                        }
+                    },
+                    {
+                        name: '卖出',
+                        type: 'scatter',
+                        data: sellMarks,
+                        symbol: 'circle',
+                        symbolSize: 10,
+                        itemStyle: {
+                            color: '#ef4136'
+                        }
+                    }
+                ]
+            };
+            
+            myChart.setOption(option);
+            
+            // 响应窗口大小变化
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+    </script>
+</body>
+</html>
